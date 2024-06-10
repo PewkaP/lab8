@@ -1,0 +1,18 @@
+FROM node:alpine
+
+ARG VERSION
+ENV APP_VER=production.${VERSION:-v1.0}
+
+RUN apt-get update && apt-get install -y curl \
+    && curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+RUN mkdir -p /var/node
+WORKDIR /var/node
+ADD src ./
+RUN npm install
+
+RUN syft . -o json > /var/node/sbom.json
+
+EXPOSE 3000
+
+ENTRYPOINT [ "./bin/www" ]
